@@ -1,12 +1,26 @@
 from django.db import models
 from django.contrib.auth.models import User
 from oauth2client.django_orm import CredentialsField, FlowField
+import string
+import random
 import six
 
 
 class GoogleOauth(models.Model):
     user = models.ForeignKey(User, db_index=True)
+    credential_id = models.CharField(max_length=250)
+    account_id = models.CharField(max_length=200)
 
+    @staticmethod
+    def generate_id(netid):
+        chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
+
+        rand_part = "".join(random.choice(chars) for _ in range(10))
+
+        return netid + "" + rand_part
+
+    class Meta:
+        unique_together = (("user", "account_id"),)
 
 if six.PY3:
     # Python3 shims.

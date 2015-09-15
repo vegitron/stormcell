@@ -1,1 +1,13 @@
 This is the home page
+
+<h2>
+Existing google auth:
+</h2>
+{% for account in google %}
+    Email: {{ account.email }} <br />
+{% endfor %}
+
+<form action="{% url 'add_google_calendar' %}">
+{% csrf_token %}
+<input type="submit" value="Connect to google">
+</form>
