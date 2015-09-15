@@ -40,6 +40,11 @@ def home(request):
 
 
 @login_required
+def show_availability(request):
+    pass
+
+
+@login_required
 def add_google_calendar(request):
     request.session['runningflow'] = True
 
@@ -110,8 +115,6 @@ def google_return(request):
         new_google_auth = GoogleOauth.objects.create(user=request.user,
                                                      credential_id=cid,
                                                      account_id=email)
-
-
 #    service = build('calendar', 'v3', http=http)
 #
 #    # 'Z' indicates UTC time
@@ -128,37 +131,35 @@ def google_return(request):
 #        start = event['start'].get('dateTime', event['start'].get('date'))
 #        print(start, event['summary'])
 
-
-
     return redirect(reverse('home'))
 
 
-def add_o365_calendar(request):
-    import uuid
-    import six
-    if six.PY2:
-        from urllib import urlencode
-    else:
-        from urllib.parse import urlencode
-    nonce = str(uuid.uuid4())
-    params = { 'client_id': settings.O365_OAUTH_CLIENT_ID,
-               'redirect_uri': settings.O365_RETURN_URL,
-               'response_type': 'code',
-               #'scope': 'openid',
-               'nonce': nonce,
-               # 'prompt': 'admin_consent',
-               'response_mode': 'form_post',
-               'resource': 'https://outlook.office365.com/',
-             }
-
-             # https://login.windows.net/common/oauth2/authorize?response_type=code&client_id=acb81092-056e-41d6-a553-36c5bd1d4a72&redirect_uri=https://mycoolwebapp.azurewebsites.net&resource=https:%2f%2foutlook.office365.com%2f&state=5fdfd60b-8457-4536-b20f-fcb658d19458
-
-    authorize_url = "https://login.microsoftonline.com/common/oauth2/authorize?{0}"
-    authorization_url = authorize_url.format(urlencode(params))
-
-    print authorization_url
-
-    return HttpResponse("OK")
+# def add_o365_calendar(request):
+#    import uuid
+#    import six
+#    if six.PY2:
+#        from urllib import urlencode
+#    else:
+#        from urllib.parse import urlencode
+#    nonce = str(uuid.uuid4())
+#    params = { 'client_id': settings.O365_OAUTH_CLIENT_ID,
+#               'redirect_uri': settings.O365_RETURN_URL,
+#               'response_type': 'code',
+#               #'scope': 'openid',
+#               'nonce': nonce,
+#               # 'prompt': 'admin_consent',
+#               'response_mode': 'form_post',
+#               'resource': 'https://outlook.office365.com/',
+#             }
+#
+#
+#    authorize_url = ("https://login.microsoftonline.com/common/oauth2/"
+#                      "authorize?{0}")
+#    authorization_url = authorize_url.format(urlencode(params))
+#
+#    print authorization_url
+#
+#    return HttpResponse("OK")
 #    request.session['runningflow'] = True
 #    storage = Storage(CredentialsModel,
 #                      'id',
@@ -173,7 +174,8 @@ def add_o365_calendar(request):
 #                                   user_agent='stormcell/1.0',
 #                                   state=request.GET.get('next', ''),
 #                                   redirect_uri=settings.O365_RETURN_URL,
-#                                   auth_uri='https://login.microsoftonline.com/common/oauth2/authorize',
+#                                   auth_uri=('https://login.microsoftonline.'
+#                                             'com/common/oauth2/authorize'),
 #                                   )
 #
 #        authorize_url = flow.step1_get_authorize_url()
@@ -216,37 +218,37 @@ def add_o365_calendar(request):
 #
 #    return HttpResponse("OK")
 #
-
-
-
-@csrf_exempt
-def o365_return(request):
-
-    print request
-    print request.POST
-
-    return HttpResponse("OK 2")
-    f = FlowModel.objects.get(id=request.session.session_key)
-
-    try:
-        credential = f.flow.step2_exchange(request.REQUEST)
-    except FlowExchangeError as ex:
-        if ex[0] == "access_denied":
-            return render_to_response("oauth2/denied.html", {})
-        raise
-
-    flow = f.flow
-    if type(flow) == 'str':
-        flow = f.flow.to_python()
-
-    storage = Storage(CredentialsModel,
-                      'id',
-                      request.session.session_key,
-                      'credential')
-    storage.put(credential)
-
-    google_login_url = reverse('google_return')
-    google_login_url = "%s?next=%s" % (google_login_url,
-                                       quote(request.GET['state']))
-
-    return redirect(google_login_url)
+#
+#
+#
+# @csrf_exempt
+# def o365_return(request):
+#
+#    print request
+#    print request.POST
+#
+#    return HttpResponse("OK 2")
+#    f = FlowModel.objects.get(id=request.session.session_key)
+#
+#    try:
+#        credential = f.flow.step2_exchange(request.REQUEST)
+#    except FlowExchangeError as ex:
+#        if ex[0] == "access_denied":
+#            return render_to_response("oauth2/denied.html", {})
+#        raise
+#
+#    flow = f.flow
+#    if type(flow) == 'str':
+#        flow = f.flow.to_python()
+#
+#    storage = Storage(CredentialsModel,
+#                      'id',
+#                      request.session.session_key,
+#                      'credential')
+#    storage.put(credential)
+#
+#    google_login_url = reverse('google_return')
+#    google_login_url = "%s?next=%s" % (google_login_url,
+#                                       quote(request.GET['state']))
+#
+#    return redirect(google_login_url)
