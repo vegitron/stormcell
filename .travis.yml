@@ -10,6 +10,9 @@ before_script:
   - source bin/activate
   - pip install pep8
   - pip install coverage
+  - cp travis-ci/manage.py manage.py
+  - python manage.py syncdb --noinput
+  - python manage.py migrate
   - coverage run --source=stormcell/ --omit=stormcell/migrations/* manage.py test stormcell
 script:
   - pep8 stormcell/ --exclude=migrations
