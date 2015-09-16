@@ -20,29 +20,6 @@ if six.PY3:
     from urllib.parse import quote
 
 
-@login_required
-def home(request):
-    request.session['forcesave'] = True
-
-    context = {
-        "google": []
-    }
-
-    existing_google_access = GoogleOauth.objects.filter(user=request.user)
-
-    for access in existing_google_access:
-        context["google"].append({
-            "email": access.account_id,
-        })
-
-    context.update(csrf(request))
-    return render_to_response("stormcell/home.html", context)
-
-
-@login_required
-def show_availability(request):
-    pass
-
 
 @login_required
 def add_google_calendar(request):
