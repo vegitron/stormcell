@@ -20,7 +20,6 @@ if six.PY3:
     from urllib.parse import quote
 
 
-
 @login_required
 def add_google_calendar(request):
     request.session['runningflow'] = True

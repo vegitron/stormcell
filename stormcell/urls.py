@@ -5,7 +5,10 @@ from stormcell.views import providers
 
 urlpatterns = [
     url('^$', page.home, name="home"),
-    url('^add_google', providers.add_google_calendar, name="add_google_calendar"),
+    url('^new$', page.show_availability, name="show_availability"),
+    url('^add_google',
+        providers.add_google_calendar,
+        name="add_google_calendar"),
     url('^google_return', providers.google_return, name="google_return"),
 ]
 
