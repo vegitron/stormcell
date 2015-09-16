@@ -5,10 +5,6 @@ python:
   - "3.4"
 install: pip install -r requirements.txt
 before_script:
-  # manually make our own virtualenv, so we don't need to worry about python version paths
-  - deactivate
-  - virtualenv .
-  - source bin/activate
   - pip install pep8
   - pip install coverage
   - cp travis-ci/manage.py manage.py
