@@ -28,11 +28,11 @@ if six.PY3:
     # on metaclass=...
 
     # But - in python2 this breaks.  so double shimmed.
-    @add_metaclass(models.SubfieldBase)
+    @six.add_metaclass(models.SubfieldBase)
     class Py3FlowField(FlowField):
         pass
 
-    @add_metaclass(models.SubfieldBase)
+    @six.add_metaclass(models.SubfieldBase)
     class Py3CredentialsField(CredentialsField):
         pass
 
