@@ -1,6 +1,7 @@
 from django.test import TestCase
 from datetime import date, time
 from stormcell.dao.schedule import merge_schedules
+from stormcell.dao.schedule import get_availability
 
 
 class TestCombo(TestCase):
@@ -41,3 +42,130 @@ class TestCombo(TestCase):
         self.assertEquals(len(merged[0]["times"]), 1)
         self.assertEquals(merged[0]["times"][0]["start"], t0)
         self.assertEquals(merged[0]["times"][0]["end"], t5)
+
+    def test_no_meetings(self):
+        d1 = date(2015, 9, 16)
+
+        t0 = time(6, 0)
+        t1 = time(7, 0)
+
+        s1 = [{"date": d1, "times": []}]
+
+        # Find times for a 30 minute meeting
+        available = get_availability(s1, d1, d1, 30)
+        self.assertEquals(len(available), 1)
+        self.assertEquals(available[0]["date"], d1)
+        self.assertEquals(len(available[0]["times"]), 2)
+        self.assertEquals(available[0]["times"][0]["start"], time(9, 0))
+        self.assertEquals(available[0]["times"][0]["end"], time(12, 0))
+        self.assertEquals(available[0]["times"][1]["start"], time(13, 0))
+        self.assertEquals(available[0]["times"][1]["end"], time(17, 0))
+
+    def test_early_meeting_only(self):
+        d1 = date(2015, 9, 16)
+
+        t0 = time(6, 0)
+        t1 = time(7, 0)
+
+        s1 = [{"date": d1, "times": [
+                                     {"start": t0, "end": t1},
+                                     ]}]
+
+        # Find times for a 30 minute meeting
+        available = get_availability(s1, d1, d1, 30)
+        self.assertEquals(len(available), 1)
+        self.assertEquals(available[0]["date"], d1)
+        self.assertEquals(len(available[0]["times"]), 2)
+        self.assertEquals(available[0]["times"][0]["start"], time(9, 0))
+        self.assertEquals(available[0]["times"][0]["end"], time(12, 0))
+        self.assertEquals(available[0]["times"][1]["start"], time(13, 0))
+        self.assertEquals(available[0]["times"][1]["end"], time(17, 0))
+
+    def test_early_meeting_ending_after_start_of_day_only(self):
+        d1 = date(2015, 9, 16)
+
+        t0 = time(6, 0)
+        t1 = time(10, 0)
+
+        s1 = [{"date": d1, "times": [
+                                     {"start": t0, "end": t1},
+                                     ]}]
+
+        # Find times for a 30 minute meeting
+        available = get_availability(s1, d1, d1, 30)
+        self.assertEquals(len(available), 1)
+        self.assertEquals(available[0]["date"], d1)
+        self.assertEquals(len(available[0]["times"]), 2)
+        self.assertEquals(available[0]["times"][0]["start"], time(10, 0))
+        self.assertEquals(available[0]["times"][0]["end"], time(12, 0))
+        self.assertEquals(available[0]["times"][1]["start"], time(13, 0))
+        self.assertEquals(available[0]["times"][1]["end"], time(17, 0))
+
+    def test_early_meeting_ending_after_lunch_only(self):
+        d1 = date(2015, 9, 16)
+
+        t0 = time(6, 0)
+        t1 = time(14, 0)
+
+        s1 = [{"date": d1, "times": [
+                                     {"start": t0, "end": t1},
+                                     ]}]
+
+        # Find times for a 30 minute meeting
+        available = get_availability(s1, d1, d1, 30)
+        self.assertEquals(len(available), 1)
+        self.assertEquals(available[0]["date"], d1)
+        self.assertEquals(len(available[0]["times"]), 1)
+        self.assertEquals(available[0]["times"][0]["start"], time(14, 0))
+        self.assertEquals(available[0]["times"][0]["end"], time(17, 0))
+
+    def test_morning_meeting(self):
+        d1 = date(2015, 9, 16)
+
+        t0 = time(10, 0)
+        t1 = time(11, 0)
+
+        s1 = [{"date": d1, "times": [
+                                     {"start": t0, "end": t1},
+                                     ]}]
+
+        # Find times for a 30 minute meeting
+        available = get_availability(s1, d1, d1, 30)
+        self.assertEquals(len(available), 1)
+        self.assertEquals(available[0]["date"], d1)
+        self.assertEquals(len(available[0]["times"]), 3)
+        self.assertEquals(available[0]["times"][0]["start"], time(9, 0))
+        self.assertEquals(available[0]["times"][0]["end"], time(10, 0))
+        self.assertEquals(available[0]["times"][1]["start"], time(11, 0))
+        self.assertEquals(available[0]["times"][1]["end"], time(12, 0))
+        self.assertEquals(available[0]["times"][2]["start"], time(13, 0))
+        self.assertEquals(available[0]["times"][2]["end"], time(17, 0))
+
+    def test_three_empty_days(self):
+        d1 = date(2015, 9, 16)
+        d2 = date(2015, 9, 17)
+        d3 = date(2015, 9, 18)
+
+        s1 = []
+        available = get_availability(s1, d1, d3, 30)
+        self.assertEquals(len(available), 3)
+        self.assertEquals(available[0]["date"], d1)
+        self.assertEquals(available[1]["date"], d2)
+        self.assertEquals(available[2]["date"], d3)
+        self.assertEquals(len(available[0]["times"]), 2)
+        self.assertEquals(available[0]["times"][0]["start"], time(9, 0))
+        self.assertEquals(available[0]["times"][0]["end"], time(12, 0))
+        self.assertEquals(available[0]["times"][1]["start"], time(13, 0))
+        self.assertEquals(available[0]["times"][1]["end"], time(17, 0))
+
+        self.assertEquals(len(available[1]["times"]), 2)
+        self.assertEquals(available[1]["times"][0]["start"], time(9, 0))
+        self.assertEquals(available[1]["times"][0]["end"], time(12, 0))
+        self.assertEquals(available[1]["times"][1]["start"], time(13, 0))
+        self.assertEquals(available[1]["times"][1]["end"], time(17, 0))
+
+        self.assertEquals(len(available[2]["times"]), 2)
+        self.assertEquals(available[2]["times"][0]["start"], time(9, 0))
+        self.assertEquals(available[2]["times"][0]["end"], time(12, 0))
+        self.assertEquals(available[2]["times"][1]["start"], time(13, 0))
+        self.assertEquals(available[2]["times"][1]["end"], time(17, 0))
