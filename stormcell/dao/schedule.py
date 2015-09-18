@@ -91,7 +91,7 @@ def _add_google_event_to_basic_hash(event, data):
 
     if not start or not end:
         # TODO - handle all day events
-        print ("Doesn't handle all day events yet :(")
+        print("Doesn't handle all day events yet :(")
         return
 
     start_obj = parse(start)
@@ -102,7 +102,7 @@ def _add_google_event_to_basic_hash(event, data):
 
     if (start_date != end_date):
         # TODO - handle spanning events
-        print ("Doesn't handle events spanning days yet")
+        print("Doesn't handle events spanning days yet")
         return
 
     date_str = str(start_date)
