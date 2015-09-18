@@ -42,6 +42,8 @@ def add_google_calendar(request):
                                    scope=scope,
                                    user_agent='stormcell/1.0',
                                    state=request.GET.get('next', ''),
+                                   access_type='offline',
+                                   approval_prompt='force',
                                    redirect_uri=settings.GOOGLE_RETURN_URL)
 
         authorize_url = flow.step1_get_authorize_url()
