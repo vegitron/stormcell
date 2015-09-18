@@ -11,6 +11,7 @@ from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 import httplib2
 from stormcell.models import CredentialsModel, FlowModel, GoogleOauth
 from stormcell.dao.schedule import get_availability_for_users
+from stormcell.dao.schedule import get_recent_rooms_for_user
 import datetime
 
 import six
@@ -23,8 +24,6 @@ if six.PY3:
 
 @login_required
 def home(request):
-    request.session['forcesave'] = True
-
     context = {
         "google": []
     }
@@ -46,8 +45,10 @@ def show_availability(request):
 
     days_to_search = []
     availability = get_availability_for_users([request.user], days_to_search)
+    rooms = get_recent_rooms_for_user(request.user)
 
     return render_to_response("stormcell/availability.html", {
         "availability": availability,
+        "rooms": rooms,
     })
     pass

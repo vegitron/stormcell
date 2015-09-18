@@ -22,7 +22,7 @@ def get_availability_for_users(users, days):
     return get_availability(merged, start.date(), end.date(), 30)
 
 
-def get_google_schedule(token, start, end):
+def get_google_calendar_service(token):
     http = httplib2.Http()
     credential_id = token.credential_id
     storage = Storage(CredentialsModel,
@@ -33,6 +33,11 @@ def get_google_schedule(token, start, end):
     credential = storage.get()
     credential.authorize(http)
     service = build('calendar', 'v3', http=http)
+    return service
+
+
+def get_google_schedule(token, start, end):
+    service = get_google_calendar_service(token)
 
     now = start.isoformat()+'Z'
     end = end.isoformat()+'Z'
@@ -239,3 +244,65 @@ def get_availability(schedule, start_date, end_date, duration):
         test_date += timedelta(days=1)
 
     return dates_with_availability
+
+
+def get_recent_rooms_for_user(user):
+    google_access_tokens = GoogleOauth.objects.filter(user=user)
+    room_list = []
+    for token in google_access_tokens:
+        room_list.extend(get_recent_rooms_for_google_token(token))
+
+    counts = {}
+    for room in room_list:
+        if room not in counts:
+            counts[room] = 0
+        counts[room] += 1
+
+    by_count = []
+    for room in sorted(counts, key=lambda x: counts[x], reverse=True):
+        by_count.append({"room": room, "count": counts[room]})
+
+    return by_count
+
+
+def get_recent_rooms_for_google_token(token):
+    service = get_google_calendar_service(token)
+    now = datetime.utcnow()
+    earliest = now - timedelta(days=30)
+
+    now = now.isoformat()+'Z'
+    earliest = earliest.isoformat()+'Z'
+
+    page_token = None
+    rooms = []
+    while True:
+        calendar_list = service.calendarList().list(
+            pageToken=page_token).execute()
+        for calendar_list_entry in calendar_list['items']:
+            cal_id = calendar_list_entry['id']
+            next_events_token = None
+            # Skip the holiday calendars
+            if re.match('.*#holiday@group.v.calendar.google.com', cal_id):
+                continue
+            if re.match('.*@holiday.calendar.google.com', cal_id):
+                continue
+
+            # Skip the birthdays calendar
+            if '#contacts@group.v.calendar.google.com' == cal_id:
+                continue
+
+            # get all the events for this calendar
+            events = service.events().list(
+                calendarId=cal_id, timeMin=earliest, timeMax=now,
+                singleEvents=True, orderBy='startTime').execute()
+
+            for event in events.get('items', []):
+                location = event.get("location", None)
+                if location is not None:
+                    rooms.append(location)
+
+        page_token = calendar_list.get('nextPageToken')
+        if not page_token:
+            break
+
+    return rooms
